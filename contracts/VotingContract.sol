@@ -32,12 +32,18 @@ contract VotingContract is Ownable {
     Proposal[] public proposals;
     // Mapeamento para rastrear se um usuário já votou
     mapping(address => bool) public hasVoted;
+    // Contador de ciclos de votação
+    mapping(address => uint256) public lastVotedCycle;
+    // Contador do ciclo atual
+    uint256 public currentCycle;
     // ID da última proposta vencedora
     uint256 public lastWinningProposalId;
     // Controle de tempo para o fim da votação
     uint256 public votingEndTime;
     // Duração de cada ciclo de votação (1 dia)
     uint256 public votingDuration = 1 days;
+    // Índice inicial para exibir propostas
+    uint256 public startIndex = 0;
 
     // Eventos que serão emitidos para registrar ações importantes
     event ProposalCreated(uint256 proposalId, address indexed proposer, string message);
@@ -81,13 +87,14 @@ contract VotingContract is Ownable {
      * @dev Função para votar em uma proposta.
      * @param proposalId ID da proposta em que o usuário deseja votar.
      */
-    function vote(uint256 proposalId) external {
+    function vote(uint16 proposalId) external {
         require(block.timestamp < votingEndTime, VotingEnded());
         if (hasVoted[msg.sender]) revert AlreadyVoted();
         if (proposalId >= proposals.length) revert ProposalNotFound();
 
+        // Contabiliza o voto e atualiza o status do usuário
         proposals[proposalId].voteCount++;
-        hasVoted[msg.sender] = true;
+        lastVotedCycle[msg.sender] = currentCycle;
 
         // Emite tokens de recompensa para o votante
         msgToken.mintReward(msg.sender, voteReward);
@@ -98,26 +105,28 @@ contract VotingContract is Ownable {
      * @dev Função para finalizar a votação e recompensar o vencedor.
      */
     function finalizeVoting() external onlyOwner {
-        if (block.timestamp < votingEndTime) revert VotingNotEnded();
+        require(block.timestamp >= votingEndTime, VotingNotEnded());
 
         uint256 winningVoteCount = 0;
+        uint256 winningProposalIndex = startIndex;
 
-        for (uint256 i = 0; i < proposals.length; i++) {
+        for (uint256 i = startIndex; i < proposals.length; i++) {
             if (proposals[i].voteCount > winningVoteCount) {
                 winningVoteCount = proposals[i].voteCount;
-                lastWinningProposalId = i;
+                winningProposalIndex = i;
             }
             hasVoted[proposals[i].proposer] = false; // Reseta o status de votação dos usuários
         }
 
-        Proposal storage winningProposal = proposals[lastWinningProposalId];
+        Proposal storage winningProposal = proposals[winningProposalIndex];
         if (!winningProposal.rewarded) {
             msgToken.mintReward(winningProposal.proposer, proposalReward);
             winningProposal.rewarded = true;
             emit ProposalWon(lastWinningProposalId, winningProposal.message, winningProposal.proposer);
         }
 
-        delete proposals;
+        startIndex = proposals.length;
+
         votingEndTime = block.timestamp + votingDuration;
     }
 
