@@ -1,16 +1,26 @@
+// MsgToken.sol
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.27;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
- * @title RewardToken
+ * @title MsgToken
  * @dev Token ERC20 usado para recompensar participantes de um sistema de votação.
  */
-contract RewardToken is ERC20 {
+contract MsgToken is ERC20, Ownable {
     address public votingContract;
 
-    constructor(uint256 initialSupply) ERC20("Reward Token", "RWT") {
+    error NotVotingContract();
+    error VotingContractAlreadySet();
+
+    modifier onlyVotingContract() {
+        require(msg.sender == votingContract, NotVotingContract()) ;
+        _;
+    }
+
+    constructor(uint256 initialSupply) ERC20("Messenger Token", "MSG") Ownable(msg.sender) {
         _mint(msg.sender, initialSupply);
     }
 
@@ -18,8 +28,8 @@ contract RewardToken is ERC20 {
      * @dev Define o endereço do contrato de votação autorizado a distribuir tokens.
      * @param _votingContract Endereço do contrato de votação.
      */
-    function setVotingContract(address _votingContract) external {
-        require(votingContract == address(0), "O contrato de votação já foi definido.");
+    function setVotingContract(address _votingContract) external onlyOwner {
+        if (votingContract != address(0)) revert VotingContractAlreadySet();
         votingContract = _votingContract;
     }
 
@@ -28,8 +38,7 @@ contract RewardToken is ERC20 {
      * @param to Endereço do destinatário.
      * @param amount Quantidade de tokens a serem emitidos.
      */
-    function mintReward(address to, uint256 amount) external {
-        require(msg.sender == votingContract, "Somente o contrato de votação pode emitir recompensas.");
+    function mintReward(address to, uint256 amount) external onlyVotingContract {
         _mint(to, amount);
     }
 }
