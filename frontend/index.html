@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Message Board DApp</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    .message-board {
+      font-size: 4em;
+      padding: 30px;
+      border-radius: 10px;
+      background-color: #e0f7fa;
+      color: #00796b;
+      font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .container {
+      max-width: 600px;
+    }
+    
+    .card {
+      border: none;
+    }
+  </style>
+</head>
+<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
+  <div class="container text-center">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title">Message Board</h2>
+        <div id="message-board" class="message-board">
+          Carregando mensagem...
+        </div>
+        <div class="input-group mt-3">
+          <input type="text" class="form-control" id="message-input" placeholder="Digite sua mensagem aqui">
+          <div class="input-group-append">
+            <button class="btn btn-primary" id="set-message-button" type="button">Alterar Mensagem</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.5.2/web3.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
