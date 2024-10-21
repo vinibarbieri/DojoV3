@@ -26,25 +26,26 @@ const ABI = [ {
     "type": "function"
   } ];
 
+// Função para conectar a carteira e atualizar a mensagem assim que carregar a página
 window.addEventListener('load', async () => {
   if (window.ethereum) {
+    // Conecta a carteira MetaMask
     window.web3 = new Web3(window.ethereum);
     await window.ethereum.enable();
     
+    // Carrega o contrato e a conta do usuário
     const contract = new window.web3.eth.Contract(ABI, CONTRACT_ADDRESS);
     const accounts = await window.web3.eth.getAccounts();
     const userAccount = accounts[0];
     
-    const messageBoard = document.getElementById('message-board');
     const messageInput = document.getElementById('message-input');
     const setMessageButton = document.getElementById('set-message-button');
     
     async function loadMessage() {
       try {
         const message = await contract.methods.getMessage().call();
-        messageBoard.innerText = message;
+        updateTextTexture(message);  // Atualiza a mensagem no painel usando o canvas
       } catch (error) {
-        messageBoard.innerText = 'Erro ao carregar a mensagem.';
         console.error(error);
       }
     }
@@ -52,7 +53,7 @@ window.addEventListener('load', async () => {
     async function setMessage() {
       const newMessage = messageInput.value;
       if (newMessage) {
-        setMessageButton.innerHTML = 'Enviando...';
+        setMessageButton.innerHTML = 'Sending...';
         setMessageButton.disabled = true;
 
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -65,7 +66,7 @@ window.addEventListener('load', async () => {
           console.error(error);
           alert('Erro ao enviar a mensagem. Verifique o console para mais detalhes.');
         } finally {
-          setMessageButton.innerHTML = 'Alterar Mensagem';
+          setMessageButton.innerHTML = 'Update message';
           setMessageButton.disabled = false;
         }
       } else {
